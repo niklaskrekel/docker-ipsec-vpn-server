@@ -1,5 +1,4 @@
-FROM debian:9.9
-MAINTAINER Jordi Gimenez <info@mobilejazz.com>
+FROM arm32v7/debian:9.9
 
 ENV REFRESHED_AT 2019-05-31
 ENV SWAN_VER 3.27
