@@ -1,15 +1,23 @@
 #!/bin/sh
 sudo modprobe af_key
 
-mkdir -p etc/ipsec.d
-mkdir -p etc/ppp
-touch etc/ipsec.d/passwd
-touch etc/ppp/chap-secrets
-touch etc/ipsec.secrets
+config_path=$(dirname $PWD)/vpn
+echo "Saving configurations in $config_path"
+
+
+mkdir -p $config_path/ipsec.d
+mkdir -p $config_path/ppp
+touch $config_path/ipsec.d/passwd
+touch $config_path/ppp/chap-secrets
+touch $config_path/ipsec.secrets
+
+docker-compose up -d vpn
+success=$?
+[ $success -eq 0 ] && echo "Started service vpn through docker compose" && exit 0
 
 EXTRA_ARGS=
-if [ -f etc/pre-up.sh ]; then
-    EXTRA_ARGS="-v $PWD/etc/pre-up.sh:/pre-up.sh"
+if [ -f $PWD/pre-up.sh ]; then
+    EXTRA_ARGS="-v $PWD/pre-up.sh:/pre-up.sh"
 fi
 
 docker run \
@@ -17,11 +25,10 @@ docker run \
     -p 500:500/udp \
     -p 4500:4500/udp \
     -v /lib/modules:/lib/modules:ro \
-    -v "$PWD/etc/ppp/chap-secrets:/etc/ppp/chap-secrets" \
-    -v "$PWD/etc/ipsec.d/passwd:/etc/ipsec.d/passwd" \
-    -v "$PWD/etc/ipsec.secrets:/etc/ipsec.secrets" \
+    -v "$config_path/ppp/chap-secrets:/etc/ppp/chap-secrets" \
+    -v "$config_path/ipsec.d/passwd:/etc/ipsec.d/passwd" \
+    -v "$config_path/ipsec.secrets:/etc/ipsec.secrets" \
     $EXTRA_ARGS \
-    -v /lib/modules:/lib/modules:ro \
     -d --privileged \
     --restart=always \
-    mobilejazz/docker-ipsec-vpn-server
+    niklas/docker-ipsec-vpn-server
